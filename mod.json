@@ -1,0 +1,101 @@
+{
+	"geode": "4.7.0",
+	"gd": {
+		"win": "2.2074",
+		"android": "2.2074",
+		"mac": "2.2074",
+		"ios": "2.2074"
+	},
+	"id": "alphalaneous.editor_extender_extreme",
+	"name": "Editor Extender Extreme",
+	"version": "v1.0.0",
+	"developer": "Alphalaneous",
+	"description": "Editor Extending and Limiting",
+	"dependencies": {
+		"alphalaneous.good_grid": ">=1.0.0"
+	},
+	"settings": {
+		"free-scroll": {
+			"type": "bool",
+			"default": false,
+			"name": "Free Scroll",
+			"description": "Lets you drag the editor without being constrained to the bounds. Use this if Free Scroll in your mod menu stops working when using this mod."
+		},
+		"place-over": {
+			"type": "bool",
+			"default": false,
+			"name": "Place Over",
+			"description": "Lets you place the same object on top of itself. Use this if Place Over in your mod menu stops working when using this mod."
+		},
+		"infinite-width": {
+			"type": "bool",
+			"default": true,
+			"name": "Infinite Width",
+			"description": "Sets the editor width to be infinite (overrides custom width)."
+		},
+		"infinite-height": {
+			"type": "bool",
+			"default": false,
+			"name": "Infinite Height",
+			"description": "Sets the editor height to be infinite (overrides custom height)."
+		},
+		"custom-values": {
+            "type": "title",
+            "name": "Custom Values"
+        },
+		"min-x": {
+			"type": "float",
+			"default": -3000,
+			"name": "Minimum X",
+			"description": "Sets the minimum x to a specific value.",
+			"max": 0,
+			"control": {
+                "slider": false,
+				"arrows": false
+            }
+		},
+		"min-y": {
+			"type": "float",
+			"default": -3000,
+			"name": "Minimum Y",
+			"description": "Sets the minimum y to a specific value.",
+			"max": 90,
+			"control": {
+                "slider": false,
+				"arrows": false
+            }
+		},
+		"max-width": {
+			"type": "float",
+			"default": 240000,
+			"name": "Max Width",
+			"description": "Sets the editor width to a specific value.",
+			"min": 0,
+			"control": {
+                "slider": false,
+				"arrows": false
+            },
+			"enable-if": "!infinite-width"
+		},
+		"max-height": {
+			"type": "float",
+			"default": 30090,
+			"name": "Max Height",
+			"description": "Sets the editor height to a specific value.",
+			"min": 0,
+			"control": {
+                "slider": false,
+				"arrows": false
+            },
+			"enable-if": "!infinite-height"
+		}
+	},
+	"links": {
+		"homepage": "https://linktr.ee/Alphalaneous",
+		"source": "https://github.com/Alphalaneous/PatchlessEditorExtension",
+		"community": "https://discord.gg/Txn2CA5dHF"
+    },
+	"tags": [
+		"editor", "customization", "enhancement"
+	]
+}
