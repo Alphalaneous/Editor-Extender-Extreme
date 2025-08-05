@@ -8,7 +8,7 @@
 	},
 	"id": "alphalaneous.editor_extender_extreme",
 	"name": "Editor Extender Extreme",
-	"version": "v1.0.0",
+	"version": "v1.0.1",
 	"developer": "Alphalaneous",
 	"description": "Editor Extending and Limiting",
 	"dependencies": {
@@ -92,7 +92,7 @@
 	},
 	"links": {
 		"homepage": "https://linktr.ee/Alphalaneous",
-		"source": "https://github.com/Alphalaneous/PatchlessEditorExtension",
+		"source": "https://github.com/Alphalaneous/Editor-Extender-Extreme",
 		"community": "https://discord.gg/Txn2CA5dHF"
     },
 	"tags": [
