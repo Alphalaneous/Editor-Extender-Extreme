@@ -55,7 +55,7 @@ public:
     void resetGridSize() {
         if (m_minX > m_maxX || m_minY > m_maxY) return;
 	    DrawGridAPI::get().overrideGridBoundsOrigin({m_minX, m_minY});
-	    DrawGridAPI::get().overrideGridBoundsSize({m_maxX, m_maxY - 90});
+	    DrawGridAPI::get().overrideGridBoundsSize({m_maxX, m_maxY});
         CCSize winSize = CCDirector::get()->getWinSize() / 0.1f;
         float totalWidth = -m_minX + m_maxX;
 		float totalHeight = -m_minY + m_maxY;

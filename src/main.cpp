@@ -4,6 +4,7 @@
 #include <Geode/modify/GameObject.hpp>
 #include <Geode/modify/DrawGridLayer.hpp>
 #include <Geode/modify/GJBaseGameLayer.hpp>
+#include <Geode/modify/SetupSmartBlockLayer.hpp>
 #include "ExtensionSettings.hpp"
 
 #include <alphalaneous.good_grid/include/DrawGridAPI.hpp>
@@ -98,6 +99,31 @@ class $modify(MyEditorUI, EditorUI) {
 		ExtensionSettings::get().resetGridSize();
 		return EditorUI::init(editorLayer);
 	}
+
+	/*
+    void doPasteObjects(bool p0) {
+		//todo
+	}
+
+    void createPrefab(GJSmartTemplate* p0, gd::string p1, int p2) {
+		//todo
+	}
+
+	void fn0x120ab0(CCPoint p0, CCPoint p1, void* p2, CCPoint p3) {
+		//todo
+	}
+
+    void findSnapObject(cocos2d::CCArray* p0, float p1) {
+		//todo
+	}
+
+    void ccTouchMoved(cocos2d::CCTouch* p0, cocos2d::CCEvent* p1) {
+		//todo
+	}
+
+    void ccTouchEnded(cocos2d::CCTouch* p0, cocos2d::CCEvent* p1) {
+		//todo
+	}*/
 
 	CCPoint getLimitedPosition(CCPoint point) {
 		const float maxY = m_editorLayer->m_levelSettings->m_dynamicLevelHeight ? ExtensionSettings::get().getMaxY() : ExtensionSettings::get().getMaxYSmall();
@@ -264,6 +290,14 @@ class $modify(MyEditorUI, EditorUI) {
 		updateSlider();
 	}
 };
+
+/*
+class $modify(MySetupSmartBlockLayer, SetupSmartBlockLayer) {
+    void onPasteTemplate(cocos2d::CCObject* sender) {
+		//todo
+	}
+};
+*/
 
 $execute {
 	ExtensionSettings::get().setup();
