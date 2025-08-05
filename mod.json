@@ -12,7 +12,7 @@
 	"developer": "Alphalaneous",
 	"description": "Editor Extending and Limiting",
 	"dependencies": {
-		"alphalaneous.good_grid": ">=1.0.0"
+		"alphalaneous.good_grid": ">=1.1.0"
 	},
 	"settings": {
 		"free-scroll": {
