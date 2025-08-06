@@ -23,7 +23,7 @@ class $modify(MyDrawGridLayer, DrawGridLayer) {
 class $modify(MyGameObject, GameObject) {
 	bool isSpeedObject_d() {
 		int id = m_objectID;
-		return id == 200 || id == 201 || id == 202 || id == 203 || id == 1334 || id == 1917 || id == 2900 || id == 2902 || id == 3022 || id == 3027;
+		return id == 200 || id == 201 || id == 202 || id == 203 || id == 1334 || id == 1917 || id == 1935 || id == 2900 || id == 2902 || id == 3022 || id == 3027;
 	}
 };
 
