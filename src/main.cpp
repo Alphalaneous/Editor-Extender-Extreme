@@ -170,7 +170,7 @@ class $modify(MyEditorUI, EditorUI) {
 
 	CCPoint getRelativeOffset_d(GameObject* object) {
 		CCPoint p = offsetForKey(object->m_objectID);
-		return p += GameToolbox::getRelativeOffset(object, p);
+		return GameToolbox::getRelativeOffset(object, p);
 	}
 
     void moveObject(GameObject* object, cocos2d::CCPoint deltaPos) {
@@ -200,25 +200,32 @@ class $modify(MyEditorUI, EditorUI) {
 	}
 
     void onCreateObject(int objectID) {
-		CCPoint objectPos = getGridSnappedPos(m_clickAtPosition);
-		objectPos += offsetForKey(objectID);
+		CCPoint basePos = getGridSnappedPos(m_clickAtPosition);
+		CCPoint offset = offsetForKey(objectID);
+		CCPoint objectPos = basePos + offset;
+
 		MyLevelEditorLayer* editorLayer = static_cast<MyLevelEditorLayer*>(m_editorLayer);
 
+		CCPoint checkPos = objectPos;
 		bool isFlipX = false;
 		bool isFlipY = false;
-		float rot = 0;
+		float rot = 0.0f;
+
 		if (m_selectedObject && m_selectedObject->m_objectID == objectID) {
 			isFlipX = m_selectedObject->isFlipX();
 			isFlipY = m_selectedObject->isFlipY();
 			rot = m_selectedObject->getRotation();
-			objectPos += getRelativeOffset_d(m_selectedObject);
+			checkPos = basePos + getRelativeOffset_d(m_selectedObject);
 		}
 
-		bool exists = editorLayer->typeExistsAtPosition(objectID, objectPos, isFlipX, isFlipY, rot);
+		bool exists = editorLayer->typeExistsAtPosition(objectID, checkPos, isFlipX, isFlipY, rot);
 
-		if ((exists || (objectID < 0 && positionIsInSnapped_d(objectPos))) && !ExtensionSettings::get().isPlaceOver()) return;
-		
-		addSnapPosition_d(objectPos);
+		if ((exists || (objectID < 0 && positionIsInSnapped_d(checkPos))) && 
+			!ExtensionSettings::get().isPlaceOver()) {
+			return;
+		}
+
+		addSnapPosition_d(checkPos);
 
 		if (objectID < 1) {
 			CCArray* objArray = CCArray::create();

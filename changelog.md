@@ -1,3 +1,6 @@
+# 1.0.3
+- Fixed a bug where placing offset objects broke after the second offset object was placed
+
 # 1.0.2
 - Fix a bug where TimeWarp was not classified as a speed object
 
