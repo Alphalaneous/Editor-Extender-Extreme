@@ -44,7 +44,7 @@ class $modify(MyLevelEditorLayer, LevelEditorLayer) {
 		return arr;
 	}
 
-    void objectMoved_d(GameObject* object) {
+	void objectMoved_d(GameObject* object) {
 		if (!object) return;
 
 		constexpr std::array<int, 51> effectObjects = {
@@ -89,41 +89,150 @@ class $modify(MyLevelEditorLayer, LevelEditorLayer) {
 class $modify(MyEditorUI, EditorUI) {
 
 	static void onModify(auto& self) {
+		#ifdef GEODE_IS_MACOS
+		(void) self.setHookPriority("EditorUI::doPasteObjects", Priority::Replace);
+		(void) self.setHookPriority("EditorUI::createPrefab", Priority::Replace);
+		(void) self.setHookPriority("EditorUI::applySpecialOffset", Priority::Replace);
+		(void) self.setHookPriority("EditorUI::findSnapObject", Priority::Replace);
+		(void) self.setHookPriority("EditorUI::getGridSnappedPos", Priority::Replace);
+		#endif
 		(void) self.setHookPriority("EditorUI::getLimitedPosition", Priority::Replace);
 		(void) self.setHookPriority("EditorUI::constrainGameLayerPosition", Priority::Replace);
 		(void) self.setHookPriority("EditorUI::moveObject", Priority::Replace);
 		(void) self.setHookPriority("EditorUI::onCreateObject", Priority::Replace);
 	}
 
-    bool init(LevelEditorLayer* editorLayer) {
+	bool init(LevelEditorLayer* editorLayer) {
 		ExtensionSettings::get().resetGridSize();
 		return EditorUI::init(editorLayer);
 	}
 
-	/*
-    void doPasteObjects(bool p0) {
-		//todo
+	#ifdef GEODE_IS_MACOS
+	void doPasteObjects(bool p0) {
+		GameManager* gameManager = GameManager::sharedState();
+		if (gameManager->m_editorClipboard.empty()) return;
+
+		GJGameLevel* level = m_editorLayer->m_level;
+		int objectCount = level->m_objectCount.value() + gameManager->m_copiedObjectCount;
+		if (objectCount > 80000 && !level->m_unlimitedObjectsEnabled) {
+			showMaxError();
+			return;
+		}
+		
+		if (objectCount > 40000 && !level->m_highObjectsEnabled) {
+			showMaxBasicError();
+			return;
+		}
+
+		if (CCArray* objects = pasteObjects(gameManager->m_editorClipboard, p0, false)) {
+			CCSize winSize = CCDirector::get()->getWinSize();
+			CCPoint centerPos = m_editorLayer->m_objectLayer->convertToNodeSpace(winSize / 2.0f + CCPoint { 0.0f, m_toolbarHeight / 2.0f });
+			repositionObjectsToCenter(objects, getGridSnappedPos(centerPos), false);
+		}
+		updateButtons();
+		updateObjectInfoLabel();
 	}
 
-    void createPrefab(GJSmartTemplate* p0, gd::string p1, int p2) {
-		//todo
+	void createPrefab(GJSmartTemplate* p0, gd::string p1, int p2) {
+		CCSize winSize = CCDirector::get()->getWinSize();
+		CCPoint centerPos = m_editorLayer->m_objectLayer->convertToNodeSpace(winSize / 2.0f + CCPoint { 0.0f, m_toolbarHeight / 2.0f });
+		centerPos.x += (p0->m_prefabIndex << 2) * 30.0f;
+		CCPoint snappedPos = getGridSnappedPos(centerPos);
+		p0->m_prefabIndex++;
+		CCPoint point;
+		for (int i = 0; i < 9; i++) {
+			char ch = p1.at(i);
+			if (ch == '0') continue;
+			CCPoint offset = GJSmartTemplate::offsetForType((SmartBlockType)ch);
+			if (i == 0) {
+				point = offset;
+			}
+			else {
+				if (i == 1 || i == 5 || i == 6) offset.y += 30.0f;
+				if (i == 2 || i == 7 || i == 8) offset.y -= 30.0f;
+				if (i == 3 || i == 5 || i == 7) offset.x -= 30.0f;
+				if (i == 4 || i == 6 || i == 8) offset.x += 30.0f;
+			}
+			int objectKey = GJSmartTemplate::smartTypeToObjectKey((SmartBlockType)ch);
+			auto smartObject = static_cast<SmartGameObject*>(createObject(objectKey, snappedPos + offset));
+			GJSmartTemplate::applyTransformationsForType((SmartBlockType)ch, smartObject);
+			if (i != 0) {
+				smartObject->m_referenceOnly = true;
+				smartObject->updateSmartFrame();
+			}
+		}
+
+		if (p2 > 0) {
+			if (GJSmartPrefab* prefab = p0->getPrefabWithID(p1, p2)) {
+				CCArray* objects = pasteObjects(prefab->m_prefabData, false, false);
+				repositionObjectsToCenter(objects, snappedPos + point, false);
+				deleteSmartBlocksFromObjects(objects);
+			}
+		}
 	}
 
-	void fn0x120ab0(CCPoint p0, CCPoint p1, void* p2, CCPoint p3) {
-		//todo
+	CCPoint applySpecialOffset(CCPoint p0, GameObject* p1, CCPoint p2) {
+		if (isSpecialSnapObject(p1->m_objectID)) {
+			CCPoint snappedPos = getGridSnappedPos(p1->getPosition());
+			if (!p2.equals({ 0.0f, 0.0f })) snappedPos = p2;
+			CCPoint objectPos = p1->getPosition();
+			float x = abs(objectPos.x);
+			if (x > 0.0f) {
+				if (abs(objectPos.x + x - snappedPos.x) < abs(objectPos.x - x - snappedPos.x)) {
+					x = -x;
+				}
+				p0.x = x;
+			}
+			float y = abs(objectPos.y);
+			if (y > 0.0f) {
+				if (abs(objectPos.y + y - snappedPos.y) < abs(objectPos.y - y - snappedPos.y)) {
+					y = -y;
+				}
+				p0.y = y;
+			}
+		}
+		return p0;
 	}
 
-    void findSnapObject(cocos2d::CCArray* p0, float p1) {
-		//todo
+	void findSnapObject(cocos2d::CCArray* p0, float p1) {
+		if (!p0 || p0->count() == 0) {
+			if (m_selectedObject && static_cast<int>(m_selectedObject->getRotation()) % 90 != 0) {
+				CCPoint position = positionWithoutOffset(m_selectedObject);
+				CCPoint offset = applySpecialOffset(position, m_selectedObject, { 0.0f, 0.0f });
+				CCPoint snappedPos = getGridSnappedPos(position);
+				if (p1 < 0.0f || (abs(snappedPos.x - offset.x) <= p1 && abs(snappedPos.y - offset.y) <= p1)) {
+					m_snapObject = m_selectedObject;
+				}
+			}
+		}
+		else {
+			float idk = 999.0f;
+			for (auto obj : CCArrayExt<GameObject*>(p0)) {
+				obj->updateStartPos();
+				CCPoint position = positionWithoutOffset(obj);
+				CCPoint offset = applySpecialOffset(position, obj, { 0.0f, 0.0f });
+				CCPoint snappedPos = getGridSnappedPos(position);
+				if (p1 < 0.0f || (abs(snappedPos.x - offset.x) <= p1 && abs(snappedPos.y - offset.y) <= p1)) {
+					float idk2 = abs(snappedPos.y - offset.y) + abs(snappedPos.x - offset.x);
+					if (idk2 < idk) {
+						idk = idk2;
+						if (shouldSnap(obj)) {
+							m_snapObject = obj;
+						}
+					}
+				}
+				if (idk == 0.0f) break;
+			}
+		}
 	}
 
-    void ccTouchMoved(cocos2d::CCTouch* p0, cocos2d::CCEvent* p1) {
-		//todo
+	CCPoint getGridSnappedPos(CCPoint pos) {
+		float size = m_editorLayer->m_drawGridLayer->m_gridSize;
+		float xVal = floorf(pos.x / size);
+		float yVal = floorf(pos.y / size);
+		return getLimitedPosition({ (xVal + 0.5f) * size, (yVal + 0.5f) * size });
 	}
-
-    void ccTouchEnded(cocos2d::CCTouch* p0, cocos2d::CCEvent* p1) {
-		//todo
-	}*/
+	#endif
 
 	CCPoint getLimitedPosition(CCPoint point) {
 		const float maxY = m_editorLayer->m_levelSettings->m_dynamicLevelHeight ? ExtensionSettings::get().getMaxY() : ExtensionSettings::get().getMaxYSmall();
@@ -173,7 +282,7 @@ class $modify(MyEditorUI, EditorUI) {
 		return GameToolbox::getRelativeOffset(object, p);
 	}
 
-    void moveObject(GameObject* object, cocos2d::CCPoint deltaPos) {
+	void moveObject(GameObject* object, cocos2d::CCPoint deltaPos) {
 		if (!object) return;
 		MyGameObject* myObject = static_cast<MyGameObject*>(object);
 		MyLevelEditorLayer* editorLayer = static_cast<MyLevelEditorLayer*>(m_editorLayer);
@@ -199,7 +308,7 @@ class $modify(MyEditorUI, EditorUI) {
 		}
 	}
 
-    void onCreateObject(int objectID) {
+	void onCreateObject(int objectID) {
 		CCPoint basePos = getGridSnappedPos(m_clickAtPosition);
 		CCPoint offset = offsetForKey(objectID);
 		CCPoint objectPos = basePos + offset;
@@ -297,14 +406,6 @@ class $modify(MyEditorUI, EditorUI) {
 		updateSlider();
 	}
 };
-
-/*
-class $modify(MySetupSmartBlockLayer, SetupSmartBlockLayer) {
-    void onPasteTemplate(cocos2d::CCObject* sender) {
-		//todo
-	}
-};
-*/
 
 $execute {
 	ExtensionSettings::get().setup();
