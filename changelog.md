@@ -1,3 +1,7 @@
+# 1.0.4
+- Remove RobTop's 999999 limit for transforming objects
+- MacOS support.
+
 # 1.0.3
 - Fixed a bug where placing offset objects broke after the second offset object was placed
 

@@ -11,29 +11,6 @@
 
 using namespace geode::prelude;
 
-class $modify(MyDrawGridLayer, DrawGridLayer) {
-	void addToSpeedObjects_d(EffectGameObject* object) {
-		if (m_speedObjects->containsObject(object)) return;
-		m_speedObjects->addObject(object);
-		m_updateSpeedObjects = true;
-		object->updateSpeedModType();
-	}
-};
-
-class $modify(MyGameObject, GameObject) {
-	bool isSpeedObject_d() {
-		int id = m_objectID;
-		return id == 200 || id == 201 || id == 202 || id == 203 || id == 1334 || id == 1917 || id == 1935 || id == 2900 || id == 2902 || id == 3022 || id == 3027;
-	}
-};
-
-class $modify(MyGJBaseGameLayer, GJBaseGameLayer) {
-	void reorderObjectSection_d(GameObject* object) {
-		removeObjectFromSection(object);
-		addToSection(object);
-	}
-};
-
 class $modify(MyLevelEditorLayer, LevelEditorLayer) {
 
 	CCArray* createNewKeyframeAnim_d() {
@@ -105,6 +82,46 @@ class $modify(MyEditorUI, EditorUI) {
 	bool init(LevelEditorLayer* editorLayer) {
 		ExtensionSettings::get().resetGridSize();
 		return EditorUI::init(editorLayer);
+	}
+
+    cocos2d::CCPoint getGroupCenter(cocos2d::CCArray* objects, bool absolute) {
+		if (objects->count() == 1) {
+			auto obj = static_cast<GameObject*>(objects->objectAtIndex(0));
+			obj->updateStartPos();
+			return obj->getPosition();
+		}
+
+		float minX =  std::numeric_limits<float>::infinity();
+		float maxX = -std::numeric_limits<float>::infinity();
+		float minY =  std::numeric_limits<float>::infinity();
+		float maxY = -std::numeric_limits<float>::infinity();
+
+		GameObject* parentObject = nullptr;
+		bool multipleParents = false;
+
+		for (auto obj : CCArrayExt<GameObject*>(objects)) {
+			obj->updateStartPos();
+
+			CCRect rect = obj->getObjectRect(1.0f, 1.0f);
+
+			maxX = std::max(maxX, rect.getMaxX());
+			minX = std::min(minX, rect.getMinX());
+			maxY = std::max(maxY, rect.getMaxY());
+			minY = std::min(minY, rect.getMinY());
+
+			if (obj->m_hasGroupParent) {
+				if (parentObject != nullptr) {
+					multipleParents = true;
+				}
+				parentObject = obj;
+			}
+		}
+
+		if (parentObject && !multipleParents) {
+			return parentObject->getRealPosition();
+		}
+
+		return {minX + (maxX - minX) * 0.5f, minY + (maxY - minY) * 0.5f};
 	}
 
 	#ifdef GEODE_IS_MACOS
@@ -262,48 +279,26 @@ class $modify(MyEditorUI, EditorUI) {
 		objectLayer->setPosition(position);
 	}
 
-	bool positionIsInSnapped_d(CCPoint pos) {
-		for (auto node : CCArrayExt<CCNode*>(m_snapPositions)) {
-			if (node->getPosition() == pos) {
-				return true;
-			}
-		}
-		return false;
-	}
-
-	void addSnapPosition_d(CCPoint pos) {
-		CCNode* node = CCNode::create();
-		node->setPosition(pos);
-		m_snapPositions->addObject(node);
-	}
-
-	CCPoint getRelativeOffset_d(GameObject* object) {
-		CCPoint p = offsetForKey(object->m_objectID);
-		return GameToolbox::getRelativeOffset(object, p);
-	}
-
 	void moveObject(GameObject* object, cocos2d::CCPoint deltaPos) {
 		if (!object) return;
-		MyGameObject* myObject = static_cast<MyGameObject*>(object);
 		MyLevelEditorLayer* editorLayer = static_cast<MyLevelEditorLayer*>(m_editorLayer);
-		MyGJBaseGameLayer* baseGameLayer = reinterpret_cast<MyGJBaseGameLayer*>(m_editorLayer);
 
 		CCPoint limitedPos = getLimitedPosition(object->getPosition() + deltaPos);
 		object->setPosition(limitedPos);
 		object->updateStartValues();
 
-		baseGameLayer->reorderObjectSection_d(object);
+		editorLayer->reorderObjectSection(object);
 
 		if (object->m_objectID == 747) {
 			TeleportPortalObject* teleportObject = static_cast<TeleportPortalObject*>(object);
 			if (teleportObject->m_orangePortal) {
-				baseGameLayer->reorderObjectSection_d(teleportObject->m_orangePortal);
+				editorLayer->reorderObjectSection(teleportObject->m_orangePortal);
 			}
 		}
 
 		editorLayer->objectMoved_d(object);
 		
-		if (myObject->isSpeedObject_d() || object->canReverse()) {
+		if (object->isSpeedObject() || object->canReverse()) {
 			m_editorLayer->m_drawGridLayer->m_updateSpeedObjects = true;
 		}
 	}
@@ -324,17 +319,17 @@ class $modify(MyEditorUI, EditorUI) {
 			isFlipX = m_selectedObject->isFlipX();
 			isFlipY = m_selectedObject->isFlipY();
 			rot = m_selectedObject->getRotation();
-			checkPos = basePos + getRelativeOffset_d(m_selectedObject);
+			checkPos = basePos + getRelativeOffset(m_selectedObject);
 		}
 
 		bool exists = editorLayer->typeExistsAtPosition(objectID, checkPos, isFlipX, isFlipY, rot);
 
-		if ((exists || (objectID < 0 && positionIsInSnapped_d(checkPos))) && 
+		if ((exists || (objectID < 0 && positionIsInSnapped(checkPos))) && 
 			!ExtensionSettings::get().isPlaceOver()) {
 			return;
 		}
 
-		addSnapPosition_d(checkPos);
+		addSnapPosition(checkPos);
 
 		if (objectID < 1) {
 			CCArray* objArray = CCArray::create();
@@ -393,13 +388,12 @@ class $modify(MyEditorUI, EditorUI) {
 		}
 
 		auto effectObject = static_cast<EffectGameObject*>(object);
-		auto myObject     = static_cast<MyGameObject*>(object);
 
 		if (object->m_classType == GameObjectClassType::Effect &&
-			myObject->isSpeedObject_d() &&
+			object->isSpeedObject() &&
 			(effectObject->m_easingType != EasingType::None || !effectObject->m_isReverse)) {
 			effectObject->m_shouldPreview = true;
-			static_cast<MyDrawGridLayer*>(editorLayer->m_drawGridLayer)->addToSpeedObjects_d(effectObject);
+			editorLayer->m_drawGridLayer->addToSpeedObjects(effectObject);
 		}
 
 		selectObject(object, false);
