@@ -113,28 +113,28 @@ public:
     }
 
     void setup() {
-        listenForSettingChanges("max-width", [this](double value) {
+        listenForSettingChanges<double>("max-width", [this](double value) {
             if (!m_infiniteWidth) setMaxX(value);
         });
-        listenForSettingChanges("max-height", [this](double value) {
+        listenForSettingChanges<double>("max-height", [this](double value) {
             if (!m_infiniteHeight) setMaxY(value);
         });
-        listenForSettingChanges("min-x", [this](double value) {
+        listenForSettingChanges<double>("min-x", [this](double value) {
             setMinX(value);
         });
-        listenForSettingChanges("min-y", [this](double value) {
+        listenForSettingChanges<double>("min-y", [this](double value) {
             setMinY(value);
         });
-        listenForSettingChanges("infinite-width", [this](bool value) {
+        listenForSettingChanges<bool>("infinite-width", [this](bool value) {
             setInfiniteWidth(value);
         });
-        listenForSettingChanges("infinite-height", [this](bool value) {
+        listenForSettingChanges<bool>("infinite-height", [this](bool value) {
             setInfiniteHeight(value);
         });
-        listenForSettingChanges("free-scroll", [this](bool value) {
+        listenForSettingChanges<bool>("free-scroll", [this](bool value) {
             setFreeScroll(value);
         });
-        listenForSettingChanges("place-over", [this](bool value) {
+        listenForSettingChanges<bool>("place-over", [this](bool value) {
             setPlaceOver(value);
         });
         setInfiniteHeight(m_infiniteHeight);

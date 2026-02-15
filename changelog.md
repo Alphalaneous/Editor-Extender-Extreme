@@ -1,3 +1,6 @@
+# 1.0.5
+- 2.2081 Support
+
 # 1.0.4
 - Remove RobTop's 999999 limit for transforming objects
 - MacOS support.
