@@ -1,7 +1,7 @@
 #pragma once
 
 #include <Geode/Geode.hpp>
-#include <alphalaneous.good_grid/include/DrawGridAPI.hpp>
+#include <alphalaneous.good_grid/include/GoodGrid.hpp>
 
 using namespace geode::prelude;
 
@@ -19,9 +19,9 @@ class ExtensionSettings {
     bool m_placeOver = Mod::get()->getSettingValue<bool>("place-over");
 
 public:
-    static ExtensionSettings& get() {
+    static ExtensionSettings* get() {
         static ExtensionSettings instance;
-        return instance; 
+        return &instance; 
     }
 
     float getMinX() {
@@ -54,17 +54,21 @@ public:
 
     void resetGridSize() {
         if (m_minX > m_maxX || m_minY > m_maxY) return;
-	    DrawGridAPI::get().overrideGridBoundsOrigin({m_minX, m_minY});
-	    DrawGridAPI::get().overrideGridBoundsSize({m_maxX, m_maxY});
+
+        if (LevelEditorLayer::get()) {
+            good_grid::overrideGridBoundsOrigin({m_minX, m_minY});
+            good_grid::overrideGridBoundsSize({m_maxX, m_maxY});
+        }
+
         CCSize winSize = CCDirector::get()->getWinSize() / 0.1f;
         float totalWidth = -m_minX + m_maxX;
 		float totalHeight = -m_minY + m_maxY;
 
         if (totalWidth <= winSize.width || totalHeight <= winSize.height) {
-            ExtensionSettings::get().setFreeScroll(true);
+            ExtensionSettings::get()->setFreeScroll(true);
         }
         else {
-            ExtensionSettings::get().setFreeScroll(Mod::get()->getSettingValue<bool>("free-scroll"));
+            ExtensionSettings::get()->setFreeScroll(Mod::get()->getSettingValue<bool>("free-scroll"));
         }
     }
 

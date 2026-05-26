@@ -80,7 +80,7 @@ class $modify(MyEditorUI, EditorUI) {
 	}
 
 	bool init(LevelEditorLayer* editorLayer) {
-		ExtensionSettings::get().resetGridSize();
+		ExtensionSettings::get()->resetGridSize();
 		return EditorUI::init(editorLayer);
 	}
 
@@ -252,26 +252,26 @@ class $modify(MyEditorUI, EditorUI) {
 	#endif
 
 	CCPoint getLimitedPosition(CCPoint point) {
-		const float maxY = m_editorLayer->m_levelSettings->m_dynamicLevelHeight ? ExtensionSettings::get().getMaxY() : ExtensionSettings::get().getMaxYSmall();
+		const float maxY = m_editorLayer->m_levelSettings->m_dynamicLevelHeight ? ExtensionSettings::get()->getMaxY() : ExtensionSettings::get()->getMaxYSmall();
 
 		return {
-			std::clamp(point.x, ExtensionSettings::get().getMinX(), ExtensionSettings::get().getMaxX()),
-			std::clamp(point.y, ExtensionSettings::get().getMinY(), maxY)
+			std::clamp(point.x, ExtensionSettings::get()->getMinX(), ExtensionSettings::get()->getMaxX()),
+			std::clamp(point.y, ExtensionSettings::get()->getMinY(), maxY)
 		};
 	}
 
 	void constrainGameLayerPosition(float x, float y) {
-		if (ExtensionSettings::get().isFreeScroll()) return;
+		if (ExtensionSettings::get()->isFreeScroll()) return;
 		CCNode* objectLayer = m_editorLayer->m_objectLayer;
 		CCPoint position = objectLayer->getPosition();
 		float zoom = objectLayer->getScale();
 
 		CCSize winSize = CCDirector::get()->getWinSize() / zoom;
 		float offset = 30.0f;
-		CCPoint min = CCPoint(ExtensionSettings::get().getMinX() - offset, ExtensionSettings::get().getMinY()) * zoom;
+		CCPoint min = CCPoint(ExtensionSettings::get()->getMinX() - offset, ExtensionSettings::get()->getMinY()) * zoom;
 		min.y -= (m_constrainedHeight - 90.0f * zoom);
-		float maxY = m_editorLayer->m_levelSettings->m_dynamicLevelHeight ? ExtensionSettings::get().getMaxY() : ExtensionSettings::get().getMaxYSmall();
-		CCPoint max = CCPoint(ExtensionSettings::get().getMaxX() + offset - winSize.width, maxY + offset - winSize.height) * zoom;
+		float maxY = m_editorLayer->m_levelSettings->m_dynamicLevelHeight ? ExtensionSettings::get()->getMaxY() : ExtensionSettings::get()->getMaxYSmall();
+		CCPoint max = CCPoint(ExtensionSettings::get()->getMaxX() + offset - winSize.width, maxY + offset - winSize.height) * zoom;
 
 		position.x = std::clamp(position.x, -max.x, -min.x);
 		position.y = std::clamp(position.y, -max.y, -min.y);
@@ -325,7 +325,7 @@ class $modify(MyEditorUI, EditorUI) {
 		bool exists = editorLayer->typeExistsAtPosition(objectID, checkPos, isFlipX, isFlipY, rot);
 
 		if ((exists || (objectID < 0 && positionIsInSnapped(checkPos))) && 
-			!ExtensionSettings::get().isPlaceOver()) {
+			!ExtensionSettings::get()->isPlaceOver()) {
 			return;
 		}
 
@@ -402,5 +402,5 @@ class $modify(MyEditorUI, EditorUI) {
 };
 
 $execute {
-	ExtensionSettings::get().setup();
+	ExtensionSettings::get()->setup();
 }
